@@ -12,7 +12,9 @@ library(shinydashboard)
 library(fontawesome)
 library(shinyFiles)
 library(shinyjs)
-
+library(fmsb)
+library(RColorBrewer)
+library(reshape2)
 
 
 
@@ -105,6 +107,33 @@ ui <- dashboardPage(
                                             plotOutput("plot1", width = "100%"),
                                             br(),
                                             tableOutput('table1'),
+                            ))),
+                          
+                          tabPanel(
+                            h6("Plots of expert variation"),
+                            fluidRow(column(10, offset=1,
+                                            br(),
+                                            h4("Expert Spider Plots" , style="color:blue; font-weight:bold%; font-family: Arial"),
+                                            h6("Individual comparison to mean" , style="color:blue; font-family: Arial"),
+                                            br(),
+                                            uiOutput("filter_name"),
+                                            br(),
+                                            plotOutput("plot_radar2", height = "600px"),
+                                            br(),
+                                            br(),
+                                            h6("All expert responses" , style="color:blue; font-family: Arial"),
+                                            br(),
+                                            plotOutput("plot_radar", height = "600px"),
+                                            
+                                            br(),
+                                            br(),
+                                            h4("Expert Bar Charts" , style="color:blue; font-weight:bold%; font-family: Arial"),
+                                            h6("Comparison of individual ranking scores" , style="color:blue; font-family: Arial"),
+                                            br(),
+                                            plotOutput("plot_bar", height = "600px"),
+                                            br(),
+                                            br()
+                                            
                             ))),
                           
                           tabPanel(
@@ -261,15 +290,14 @@ server <- function(input, output,session) {
     
     
     
-    ## THIS LOADS A BACKUP TO GOOGLDRIVE AT eke.efsa.1
     dat_to_save <- as.data.frame(read_csv(paste0(input$filename, "_RNK_" ,updated_string2, format(Sys.Date(), format="%b_%d_%y"), ".csv")))
     dat_to_save$rank <- seq(1,nrow(dat_to_save),1)
     colnames(dat_to_save)[1] <- input$filename
     write_csv(dat_to_save, paste0(input$filename, "_expert_answers_",format(Sys.Date(), format="%b_%d_%y"), ".csv"))
     
-   output$submitted <- renderText({
-     ".... file submitted thank you"
-   })
+    output$submitted <- renderText({
+      ".... file submitted thank you"
+    })
     
   })
   
@@ -363,6 +391,111 @@ server <- function(input, output,session) {
         names_done()
       })
       
+      output$filter_name <- renderUI({
+        
+        selectInput("filter_name", "Filter by expert", c( files$name_included ))
+        
+      })
+      
+      db_rad <- data.frame()
+      names_rad <- unique(db_all$Participant)
+      
+      for(i in 1:length(names_rad)){
+        dat_in_1 <- db_all %>% filter(Participant==names_rad[i])
+        dat_in <- t(dat_in_1[, c(3)])
+        colnames(dat_in) <- dat_in_1$name
+        new_order = sort(colnames(dat_in))
+        dat_in_final <- as.data.frame(t(dat_in[1, new_order]))
+        dat_in_final[1, ] <- as.numeric(dat_in_final[1,])
+        db_rad <- rbind(db_rad,dat_in_final)
+        
+      }
+      db_rad <- as.data.frame(sapply(db_rad, as.numeric))
+      
+      max_rad <- as.data.frame(rep(length(labels), length(labels)))
+      min_rad <- as.data.frame(rep(1,length(labels)))
+      df_mm <- as.data.frame(t(cbind(min_rad,max_rad)))
+      colnames(df_mm) <- new_order
+      
+      db_rad_plot <- rbind(df_mm,db_rad )
+      
+      qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+      colours_in <-  brewer.pal.info[brewer.pal.info$category == 'qual',]
+      col_vector <- unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+      col_vector <- col_vector[-4]
+      
+      create_beautiful_radarchart <- function(data, color = col_vector[1:length(names_rad)], 
+                                              vlabels = colnames(data), vlcex = 0.7,
+                                              caxislabels = NULL, title = NULL, ...){
+        radarchart(
+          data, axistype = 1,
+          # Customize the polygon
+          pcol = color, pfcol = NULL, plwd = 2, plty = 1,
+          # Customize the grid
+          cglcol = "grey", cglty = 1, cglwd = 0.8,
+          # Customize the axis
+          axislabcol = "grey", 
+          # Variable labels
+          vlcex = 1, vlabels = vlabels,
+          caxislabels = caxislabels, title = title, ...
+        )
+      }
+      
+      output$plot_radar <- renderPlot({
+        
+        op <- par(mar = c(.1, .1, .1, 1))
+        create_beautiful_radarchart(db_rad_plot, caxislabels = c(length(labels),"","","",1))
+        par(op)
+        legend(x=1.5, y=1, legend = c(files$name_included), bty = "n", pch=20 , col=col_vector[1:length(names_rad)] , text.col = "black", cex=1.1, pt.cex=2.5)
+        
+      })
+      
+      react_name <- reactive({
+        input$filter_name
+      })
+      
+      observeEvent(input$filter_name, {
+        
+        
+        output$plot_radar2 <- renderPlot({
+          
+          
+          
+          dat_rad_exp <- db_rad_plot
+          dat_rad_exp_only <- dat_rad_exp[3:nrow(dat_rad_exp),]
+          col_means <- t(colMeans(dat_rad_exp_only))
+          dat_rad_exp2 <- rbind(dat_rad_exp, col_means)
+          dat_rad_exp2$name <- c("Min", "Max", files$name_included, "Mean")
+          
+          dat_rad_exp_plot2 <- dat_rad_exp2[(dat_rad_exp2$name == react_name() | dat_rad_exp2$name == "Max" | dat_rad_exp2$name == "Min" | dat_rad_exp2$name == "Mean"),]
+          
+          op <- par(mar = c(.1, .1, .1, 1))
+          create_beautiful_radarchart(dat_rad_exp_plot2[,-ncol(dat_rad_exp_plot2)], caxislabels = c(length(labels),"","","",1))
+          par(op)
+          legend(x=1.5, y=1, legend = c(react_name(), "Mean"), bty = "n", pch=20 , col=col_vector[1:length(names_rad)] , text.col = "black", cex=1.1, pt.cex=2.5)
+          
+          
+        })
+        
+      })
+      
+      output$plot_bar <- renderPlot({
+        
+        dat_bar_plot <- db_rad_plot[3:nrow(db_rad_plot),]
+        dat_bar_plot$name <- files$name_included
+        melt_dat_bar_plot <- melt(dat_bar_plot)
+        ggplot(melt_dat_bar_plot, aes(x=variable, y=value)) +
+          geom_bar(stat="identity", fill="pink", width=0.6) +
+          coord_flip() +
+          xlab("")+
+          theme_minimal()+
+          theme(axis.text=element_text(size=12),strip.text = element_text(
+            size = 14))+
+          facet_wrap(~name)
+      })
+      
+      
+      
       ## FILE VIEWER FOR MODERATOR
       
       files_all$Row <- seq(1,nrow(files_all),1)
@@ -379,7 +512,7 @@ server <- function(input, output,session) {
         
         files_all
       }, digits = 0)
-
+      
       
     } ## END CONDITIONAL PASSWORD SECTION
   }) 
