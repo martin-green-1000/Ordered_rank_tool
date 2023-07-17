@@ -459,7 +459,26 @@ server <- function(input, output,session) {
         
         output$plot_radar2 <- renderPlot({
           
+          mycol <- rgb(0, 0, 255, max = 255, alpha = 5, names = "blue50")
+          mycol1 <- rgb(0, 0, 255, max = 255, alpha = 0, names = "blue50")
           
+          create_mean_radarchart <- function(data, color = col_vector[1:length(names_rad)], 
+                                             vlabels = colnames(data), vlcex = 0.7,
+                                             caxislabels = NULL, title = NULL, ...){
+            radarchart(
+              data, axistype = 1,
+              # Customize the polygon
+              pcol = color, pfcol = c(mycol1, mycol), 
+              plwd = 2, plty = 1,
+              # Customize the grid
+              cglcol = "grey", cglty = 1, cglwd = 0.8,
+              # Customize the axis
+              axislabcol = "grey", 
+              # Variable labels
+              vlcex = 1, vlabels = vlabels,
+              caxislabels = caxislabels, title = title, ...
+            )
+          }
           
           dat_rad_exp <- db_rad_plot
           dat_rad_exp_only <- dat_rad_exp[3:nrow(dat_rad_exp),]
@@ -470,7 +489,7 @@ server <- function(input, output,session) {
           dat_rad_exp_plot2 <- dat_rad_exp2[(dat_rad_exp2$name == react_name() | dat_rad_exp2$name == "Max" | dat_rad_exp2$name == "Min" | dat_rad_exp2$name == "Mean"),]
           
           op <- par(mar = c(.1, .1, .1, 1))
-          create_beautiful_radarchart(dat_rad_exp_plot2[,-ncol(dat_rad_exp_plot2)], caxislabels = c(length(labels),"","","",1))
+          create_mean_radarchart(dat_rad_exp_plot2[,-ncol(dat_rad_exp_plot2)], caxislabels = c(length(labels),"","","",1))
           par(op)
           legend(x=1.5, y=1, legend = c(react_name(), "Mean"), bty = "n", pch=20 , col=col_vector[1:length(names_rad)] , text.col = "black", cex=1.1, pt.cex=2.5)
           
