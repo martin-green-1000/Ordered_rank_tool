@@ -31,7 +31,9 @@ RUN install2.r --error \
   sortable \
   shinyFiles \
   RColorBrewer \
-  reshape2
+  reshape2 \
+  plot.matrix \
+  htmlwidgets
 
 
 COPY R ./app
