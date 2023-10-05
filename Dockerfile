@@ -15,19 +15,24 @@ RUN /rocker_scripts/install_tidyverse.sh
 
 # install  packages
 
+ Install R packages
+RUN install2.r --error \
+    fontawesome \
+    shiny \
+  readr \
+  readxl \
+  shinyjs \
+  bslib \
+  shinydashboard \
+  fmsb \
+  reshape2 \
+  stringr \
+  shinydashboardPlus \
+  sortable \
+  shinyFiles \
+  RColorBrewer \
+  reshape2
 
-RUN R -e "install.packages('shiny', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('shinydashboard', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('sortable', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('readr', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('readxl', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('bslib', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('shinyFiles', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('shinyjs', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('fontawesome', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('fmsb', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('RColorBrewer', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('reshape2', repos='http://cran.rstudio.com/')"
 
 COPY R ./app
 
