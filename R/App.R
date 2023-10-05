@@ -453,7 +453,7 @@ server <- function(input, output) {
     list_in <- as.data.frame(list.files(pattern="_RNK_tt_"))
     colnames(list_in)[1] <- "nme"
     files <- dplyr::filter(list_in, grepl(updated_string2,nme))
-    files$name_included <- substr(files$nme,1,nchar(files$nme)-(18+ nchar(updated_string2)))
+    files$name_included <- substr(files$nme,1,nchar(files$nme)-(21+ nchar(updated_string2)))
     
     files_all <- as.data.frame(files) ## FOR THE LATER SERVER VIEWING OF FILES
     colnames(files_all) <- c("FILE CODE_DATE", "Participant")
