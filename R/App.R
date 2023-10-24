@@ -318,8 +318,12 @@ server <- function(input, output) {
   
   ## SAVE PARTICIPANTS SELECTIONS
   # FIRST LINK TO THE SPECIFIC LIST OF SELECTIONS AVAILABLE FOR THIS EKE
+  s <- strsplit(input_data_names$V3[1], " ")
+  title_string <- sapply(s, function(x){
+    toupper(paste(substring(x, 1, 1), collapse = ""))
+  })
   
-  my_string<-sort(c(as.vector(substr(labels, start = 1, stop = 1)), as.vector(substr(labels, start = min(nchar(labels)) , stop = min(nchar(labels)) ))))
+  my_string<-sort(c( as.vector(title_string) , as.vector(substr(labels, start = 1, stop = 1)), as.vector(substr(labels, start = min(nchar(labels)) , stop = min(nchar(labels)) ))))
   updated_string <- paste(my_string,collapse='')
   updated_string2 <-gsub(" ", "", updated_string)
   
