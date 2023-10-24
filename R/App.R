@@ -42,7 +42,7 @@ ui <- dashboardPage(
                     tabsetPanel(
                       tabPanel(
                         
-                        h4("Items to Rank", style="background-color:white;color:blue;font-weight: bold;  font-size:100%; font-family: Arial"),
+                        h4(uiOutput("title_in", style="background-color:white;color:blue;font-weight: bold;  font-size:110%; font-family: Arial")),
                         br(),
                         fluidRow(column( 10, 
                                          uiOutput("sortable", style =  " line-height: 5px;font-weight: bold;font-size:16px;font-family: Arial")
@@ -88,13 +88,7 @@ ui <- dashboardPage(
                       tabPanel(""),
                       tabPanel(""),
                       tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
-                      tabPanel(""),
+                      
                       
                       tabPanel(
                         h6("Facilitator", style="background-color:white;font-size:75%; font-family: Arial"),
@@ -274,6 +268,8 @@ server <- function(input, output) {
   })
   
   
+  
+  
   ### WRITE NEW FILE WITH NAMES TO SERVER
   observeEvent(input$saveBtn_input, {
     if(input$password==1234){
@@ -295,6 +291,13 @@ server <- function(input, output) {
   
   output$table <- renderTable({
     names_explained 
+  })
+  
+  ### LOAD TITLE INTO TAB ##
+  
+  output$title_in <- renderText({
+    input_data_names$V3[1]
+    
   })
   
   ## SET OUT THE LIST OF ITEMS TO BE RANKED
