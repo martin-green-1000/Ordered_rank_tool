@@ -242,15 +242,37 @@ ui <- dashboardPage(
                                 br(),
                                 br()
                                 
-                              ),
+                              )
                               
-                            ))))))))) 
+                            )),
+                          
+                          tabPanel(
+                            
+                            h6("Delete unwanted files of expert's inputs"),
+                            br(),
+                            tableOutput("all_files_tab"),
+                            br(),
+                            br(),
+                            numericInput("nmb_del","Enter line number of file to delete, then press Enter - REQUIRES PASSWORD!....table will refresh in a few seconds", "" ),
+                            
+                            actionButton("del", "Enter", style="background-color:#ff8282;color:white; border-color:#ff8282;padding:4px; font-size:110%; font-family: Arial"),
+                            br(),
+                            textOutput("text_del"),
+                            br(),
+                            br(),
+                            br()
+                            
+                          )
+                          
+                          
+                          
+                          ))))))) 
 
 #
 ############## SERVER CODE TO ACTION APP ###############
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   ## TO GET NEW INPUT FILE WITH NAMES TO RANK  
   mydata <- reactive({
@@ -325,7 +347,15 @@ server <- function(input, output) {
   
   my_string<-sort(c( as.vector(title_string) , as.vector(substr(labels, start = 1, stop = 1)), as.vector(substr(labels, start = min(nchar(labels)) , stop = min(nchar(labels)) ))))
   updated_string <- paste(my_string,collapse='')
-  updated_string2 <-gsub(" ", "", updated_string)
+  updated_string_c <-gsub(" ", "", updated_string)
+  
+  if(nchar(updated_string_c)<10){
+    updated_string2 <- updated_string_c
+  }else{
+    updated_stringc2 <- c(substr(updated_string_c, start = 1, stop = 8), substr(updated_string_c, start = 8, stop = min(16, nchar(updated_string_c))))
+    updated_string_c <-paste(updated_stringc2,collapse='')
+    updated_string2 <-gsub(" ", "", updated_string_c)
+  }
   
   
   
@@ -808,6 +838,60 @@ server <- function(input, output) {
     }
   )
   
+  ### FILE DELETION CODE ###
+  
+ # files_all <- drive_find( q = "name contains '_RNK_tt_'" , pattern = updated_string2  )
+  
+  files_all <- as.data.frame(list.files(pattern="_RNK_tt_"))
+  
+  if(nrow(files_all)<1){
+    
+    output$all_files_tab <- NULL
+    
+  }else{
+    
+    df_all_files <- data.frame(files_all)
+    colnames(df_all_files)[1]<- "File Names"
+    df_all_files$File_Number <- seq(1, nrow(df_all_files))
+    colnames(df_all_files)[1] <- "file_names"
+    
+    
+    output$all_files_tab <- renderTable({
+      df_all_files
+    })  
+  }
+  
+  observeEvent(input$del, {
+    
+    validate(
+      need(input$password == 1234, "Password needed")
+    )
+    
+    #files_all_del <- drive_find( q = "name contains '_RNK_tt_'" , pattern = updated_string2 )
+    
+    files_all_del <- as.data.frame(list.files(pattern="_RNK_tt_"))
+    
+    if(nrow(files_all_del)>0){
+      for( i in c(input$nmb_del)){
+        unlink(files_all_del[i,1])
+        
+      }
+    }
+    
+    files_all_del <- NULL
+    
+    output$text_del <- renderText({
+      
+      "No password entered"
+      
+      
+    })
+    
+    session$reload()
+    return()
+    
+  })
+  ######
   
 }
 
